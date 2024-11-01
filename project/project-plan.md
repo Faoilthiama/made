@@ -37,8 +37,8 @@ Because this dataset includes less data than Datasource1, the analysis can only 
 4. Data Analysis [#4][i4]
 5. Write Project Report [#5][i5]
 
-[i1]: https://github.com/users/Faoilthiama/projects/1/views/1?pane=issue&itemId=85529288
-[i2]: https://github.com/users/Faoilthiama/projects/1/views/1?pane=issue&itemId=85658561
-[i3]: https://github.com/users/Faoilthiama/projects/1/views/1?pane=issue&itemId=85658567
-[i4]: https://github.com/users/Faoilthiama/projects/1/views/1?pane=issue&itemId=85658575
-[i5]: https://github.com/users/Faoilthiama/projects/1/views/1?pane=issue&itemId=85658587
+[i1]: https://github.com/Faoilthiama/made/issues/1
+[i2]: https://github.com/Faoilthiama/made/issues/2
+[i3]: https://github.com/Faoilthiama/made/issues/3
+[i4]: https://github.com/Faoilthiama/made/issues/4
+[i5]: https://github.com/Faoilthiama/made/issues/5
