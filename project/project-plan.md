@@ -1,7 +1,7 @@
 # Project Plan
 
 ## Title
-Funding Health, Extending Life: Exploring the Relationship Between Health Expenditures and Life Expectancy in Latin America and the Caribbean
+Funding Health, Extending Life
 
 ## Main Question
 
