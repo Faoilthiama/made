@@ -25,13 +25,13 @@ def clean_data(dataset: str):
     data_sheet = data_sheet[data_sheet['Country Code'].isin(lac_country_codes)]
 
     data_sheet.drop(['Indicator Name', 'Indicator Code'], axis=1, inplace=True)
-    columns_to_drop = [col for col in data_sheet.columns if col.isdigit() and (1960 <= int(col) <= 1999 or int(col) >= 2022)]
+    columns_to_drop = [col for col in data_sheet.columns if
+                       col.isdigit() and (1960 <= int(col) <= 1999 or int(col) >= 2022)]
     data_sheet.drop(columns=columns_to_drop, axis=1, inplace=True)
 
     columns_to_check = [str(year) for year in range(2000, 2022)]
     data_sheet = data_sheet.dropna(subset=columns_to_check, how='all')
     return data_sheet.fillna(0)
-
 
 
 def write_to_database(dataset1, dataset2):
