@@ -1,0 +1,81 @@
+pipeline CountryStats {
+
+    CountryStatsExtractor
+        -> CountryStatsXLSXInterpreter
+        -> CountryStatsSheetPicker
+        -> CountryStatsCellRangeSelector;
+
+    CountryStatsCellRangeSelector
+        -> GDPColumnDeleter
+        -> GDPTableInterpreter
+        -> GDPSQLiteLoader;
+
+    CountryStatsCellRangeSelector
+        -> BondIssuanceColumnDeleter
+        -> BondIssuanceTableInterpreter
+        -> BondIssuanceSQLiteLoader;
+
+    block CountryStatsExtractor oftype HttpExtractor {
+        url: "https://thedocs.worldbank.org/en/doc/7d852628d96b9411d43e5d36d5dff941-0050062022/original/Graphs-Chapter-5-02082022.xlsx";
+    }
+
+    block CountryStatsXLSXInterpreter oftype XLSXInterpreter { }
+
+    block CountryStatsSheetPicker oftype SheetPicker {
+            sheetName: "Figure S5.1.2";
+    }
+
+    block CountryStatsCellRangeSelector  oftype CellRangeSelector  {
+        select: range P2:S45;
+    }
+    
+    block BondIssuanceColumnDeleter oftype ColumnDeleter {
+        delete:  [column B, column C];
+    }
+
+    block BondIssuanceTableInterpreter oftype TableInterpreter {
+        header: false;
+        columns:  [
+                "Country Code" oftype CountryCodeAlpha3,
+                "Bond Issuance Share" oftype BondIssuance
+            ];
+    }
+
+    block BondIssuanceSQLiteLoader oftype SQLiteLoader {
+        table: "bondIssuance";
+        file: "./country-stats.sqlite";
+    }
+
+    block GDPColumnDeleter oftype ColumnDeleter {
+        delete:  [column B, column D];
+    }
+
+    block GDPTableInterpreter oftype TableInterpreter {
+        header: false;
+        columns:  [
+                "Country Code" oftype CountryCodeAlpha3,
+                "GDP per Capita" oftype GDP
+            ];
+    }
+
+    block GDPSQLiteLoader oftype SQLiteLoader {
+        table: "gdpPerCapita";
+        file: "./country-stats.sqlite";
+    }
+
+    valuetype GDP oftype decimal {
+        constraints: [ GDPRange ];
+    }
+
+    constraint GDPRange on GDP:
+        value >= 0;
+
+    valuetype BondIssuance oftype decimal {
+        constraints: [ BondIssuanceRange ];
+    }
+
+    constraint BondIssuanceRange oftype RangeConstraint {
+        lowerBound: 0;
+        upperBound: 1;
+    }
+}
