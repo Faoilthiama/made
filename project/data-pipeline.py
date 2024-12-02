@@ -33,23 +33,43 @@ def clean_data(dataset):
     print(f'Cleaning data...')
     try:
         countries = dataset.parse('Metadata - Countries')
-        lac_region = countries[countries['Region'] == 'Latin America & Caribbean']
-        lac_country_codes = list(lac_region['Country Code'])
 
-        data_sheet = dataset.parse('Data', header=3)
-        data_sheet = data_sheet[data_sheet['Country Code'].isin(lac_country_codes)]
+        lac_country_codes = _get_country_codes(countries)
 
-        data_sheet.drop(['Indicator Name', 'Indicator Code'], axis=1, inplace=True)
-        columns_to_drop = [col for col in data_sheet.columns if
-                           col.isdigit() and (1960 <= int(col) <= 1999 or int(col) >= 2022)]
-        data_sheet.drop(columns=columns_to_drop, axis=1, inplace=True)
+        data_sheet = _filter_countries(dataset, lac_country_codes)
 
-        columns_to_check = [str(year) for year in range(2000, 2022)]
-        data_sheet = data_sheet.dropna(subset=columns_to_check, how='all')
+        data_sheet = _drop_irrelevant_columns(data_sheet)
+
+        data_sheet = _drop_empty_rows(data_sheet)
         return data_sheet.fillna(0)
     except Exception as e:
         print('Something went wrong during data cleaning.')
         raise Exception('Data cleaning failed', e)
+
+
+def _drop_empty_rows(data_sheet):
+    columns_to_check = [str(year) for year in range(2000, 2022)]
+    data_sheet = data_sheet.dropna(subset=columns_to_check, how='all')
+    return data_sheet
+
+
+def _drop_irrelevant_columns(data_sheet):
+    data_sheet = data_sheet.drop(['Indicator Name', 'Indicator Code'], axis=1)
+    columns_to_drop = [col for col in data_sheet.columns if
+                       col.isdigit() and (1960 <= int(col) <= 1999 or int(col) >= 2022)]
+    data_sheet = data_sheet.drop(columns=columns_to_drop, axis=1)
+    return data_sheet
+
+
+def _filter_countries(dataset, lac_country_codes):
+    data_sheet = dataset.parse('Data', header=3)
+    data_sheet = data_sheet[data_sheet['Country Code'].isin(lac_country_codes)]
+    return data_sheet
+
+
+def _get_country_codes(countries):
+    lac_region = countries[countries['Region'] == 'Latin America & Caribbean']
+    return list(lac_region['Country Code'])
 
 
 def write_to_database(dataset1, dataset2):

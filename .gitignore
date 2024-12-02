@@ -5,3 +5,5 @@
 *.xls
 *.txt
 .idea
+!/project/test-data.xls
+*.pyc
