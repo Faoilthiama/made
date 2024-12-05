@@ -10,9 +10,13 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
       - name: Setup environment
         run: pip install -r ./project/requirements.txt
       - name: Run tests
         run:  |
             chmod +x ./project/tests.sh
-            ./project/tests.sh
+            bash ./project/tests.sh
