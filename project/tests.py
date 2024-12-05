@@ -2,10 +2,7 @@ import importlib.util
 import os
 import sqlite3
 import subprocess
-import tempfile
-import tracemalloc
 import unittest
-import urllib.request
 from io import StringIO
 from unittest.mock import Mock, patch
 from urllib import request
@@ -22,16 +19,19 @@ spec.loader.exec_module(module)
 
 
 class SystemTest(unittest.TestCase):
-    def test_that_pipeline_creates_database(self):
-        path = '../data/database.sqlite'
-        if os.path.exists(path):
-            os.remove(path)
+    def setUp(self):
+        self.path = '../data/database.sqlite'
+        if os.path.exists(self.path):
+            os.remove(self.path)
 
+    def tearDown(self):
+        if os.path.exists(self.path):
+            os.remove(self.path)
+
+    def test_that_pipeline_creates_database(self):
         result = subprocess.run(["python", "data-pipeline.py"], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0)
-        self.assertTrue(os.path.exists(path))
-
-        os.remove(path)
+        self.assertTrue(os.path.exists(self.path))
 
 
 class TestDownload(unittest.TestCase):
@@ -94,7 +94,6 @@ class TestDownload(unittest.TestCase):
 
 
 class TestWriteDatabase(unittest.TestCase):
-
     def setUp(self):
         self.path = '../data/database.sqlite'
         if os.path.exists(self.path):
@@ -106,9 +105,9 @@ class TestWriteDatabase(unittest.TestCase):
 
     def test_write_database_create_file(self):
         # Arrange
-        df = pd.ExcelFile(DATA_PATH)
-        data1 = df.parse('Data', header=3)
-        data2 = df.parse('Data', header=3)
+        with pd.ExcelFile(DATA_PATH) as df:
+            data1 = df.parse('Data', header=3)
+            data2 = df.parse('Data', header=3)
 
         # Act
         module.write_to_database(data1, data2)
@@ -118,10 +117,9 @@ class TestWriteDatabase(unittest.TestCase):
 
     def test_write_database_contains_correct_tables(self):
         # Arrange
-        df = pd.ExcelFile(DATA_PATH)
-        df = pd.ExcelFile(DATA_PATH)
-        data1 = df.parse('Data', header=3)
-        data2 = df.parse('Data', header=3)
+        with pd.ExcelFile(DATA_PATH) as df:
+            data1 = df.parse('Data', header=3)
+            data2 = df.parse('Data', header=3)
 
         # Act
         module.write_to_database(data1, data2)
@@ -139,13 +137,15 @@ class TestWriteDatabase(unittest.TestCase):
             self.assertTrue("health_expenditure" in tables)
         except sqlite3.Error:
             print('Something went wrong during database connection.')
+        finally:
+            conn.close()
 
 
 class TestCleanData(unittest.TestCase):
     def test_get_country_codes(self):
         # Arrange
-        df = pd.ExcelFile(DATA_PATH)
-        countries = df.parse('Metadata - Countries')
+        with pd.ExcelFile(DATA_PATH) as df:
+            countries = df.parse('Metadata - Countries')
 
         # Act
         country_codes = module._get_country_codes(countries)
@@ -156,11 +156,9 @@ class TestCleanData(unittest.TestCase):
         self.assertTrue("ARG" in country_codes)
 
     def test_filter_countries(self):
-        # Arrange
-        df = pd.ExcelFile(DATA_PATH)
-
-        # Act
-        actual = module._filter_countries(df, ['ARG'])
+        # Arrange &Act
+        with pd.ExcelFile(DATA_PATH) as df:
+            actual = module._filter_countries(df, ['ARG'])
 
         # Assert
         self.assertTrue("ARG" in actual['Country Code'].values)
@@ -168,8 +166,8 @@ class TestCleanData(unittest.TestCase):
 
     def test_drop_irrelevant_columns(self):
         # Arrange
-        df = pd.ExcelFile(DATA_PATH)
-        data = df.parse('Data', header=3)
+        with pd.ExcelFile(DATA_PATH) as df:
+            data = df.parse('Data', header=3)
 
         # Act
         actual = module._drop_irrelevant_columns(data)
@@ -182,8 +180,8 @@ class TestCleanData(unittest.TestCase):
 
     def test_drop_empty_rows(self):
         # Arrange
-        df = pd.ExcelFile(DATA_PATH)
-        data = df.parse('Data', header=3)
+        with pd.ExcelFile(DATA_PATH) as df:
+            data = df.parse('Data', header=3)
 
         # Act
         actual = module._drop_empty_rows(data)
@@ -193,11 +191,9 @@ class TestCleanData(unittest.TestCase):
         self.assertTrue("ARG" in actual['Country Code'].values)
 
     def test_clean_data_fills_missing_values(self):
-        # Arrange
-        file = pd.ExcelFile(DATA_PATH)
-
-        # Act
-        actual = module.clean_data(file)
+        # Arrange & Act
+        with pd.ExcelFile(DATA_PATH) as df:
+            actual = module.clean_data(df)
 
         # Assert
         self.assertTrue("BLZ" in actual['Country Code'].values)

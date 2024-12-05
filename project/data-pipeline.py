@@ -17,9 +17,8 @@ def download_datasets():
             urllib.request.urlretrieve(
                 "https://api.worldbank.org/v2/en/indicator/SH.XPD.CHEX.PP.CD?downloadformat=excel",
                 DATASET2)
-            df1 = pd.ExcelFile(DATASET1)
-            df2 = pd.ExcelFile(DATASET2)
-            return df1, df2
+            with pd.ExcelFile(DATASET1) as df1, pd.ExcelFile(DATASET2) as df2:
+                return df1, df2
         except URLError as e:
             if i < 2:
                 print('Oops. Something went wrong with the download.')
@@ -83,9 +82,12 @@ def write_to_database(dataset1, dataset2):
         conn = sqlite3.connect("../data/database.sqlite")
         dataset1.to_sql("life_expectancy", conn, if_exists="replace", index=False)
         dataset2.to_sql("health_expenditure", conn, if_exists="replace", index=False)
+        conn.commit()
     except sqlite3.Error as e:
         print('Something went wrong during database connection.')
         raise Exception('Writing data failed', e)
+    finally:
+        conn.close()
 
 
 if __name__ == '__main__':
