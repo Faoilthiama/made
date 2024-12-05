@@ -196,7 +196,7 @@ class TestCleanData(unittest.TestCase):
         # Arrange
         file = pd.ExcelFile(DATA_PATH)
 
-        # Act
+        #  Act
         actual = module.clean_data(file)
 
         # Assert
