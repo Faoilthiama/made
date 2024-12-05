@@ -2,7 +2,10 @@ import importlib.util
 import os
 import sqlite3
 import subprocess
+import tempfile
+import tracemalloc
 import unittest
+import urllib.request
 from io import StringIO
 from unittest.mock import Mock, patch
 from urllib import request
@@ -20,31 +23,47 @@ spec.loader.exec_module(module)
 
 class SystemTest(unittest.TestCase):
     def test_that_pipeline_creates_database(self):
+        path = '../data/database.sqlite'
+        if os.path.exists(path):
+            os.remove(path)
+
         result = subprocess.run(["python", "data-pipeline.py"], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0)
-        self.assertTrue(os.path.exists('../data/database.sqlite'))
+        self.assertTrue(os.path.exists(path))
+
+        os.remove(path)
 
 
 class TestDownload(unittest.TestCase):
 
+    def setUp(self):
+        self.path1 = './dataset1.xls'
+        self.path2 = './dataset2.xls'
+        if os.path.exists(self.path1):
+            os.remove(self.path1)
+        if os.path.exists(self.path2):
+            os.remove(self.path2)
+
+    def tearDown(self):
+        if os.path.exists(self.path1):
+            os.remove(self.path1)
+        if os.path.exists(self.path2):
+            os.remove(self.path2)
+
     def test_download_create_files(self):
         # Arrange
-        file = open(DATA_PATH, "r")
-        request.urlretrieve = Mock(return_value=file)
+        request.urlretrieve = Mock(side_effect=self.mock_urlretrieve)
 
         # Act
         module.download_datasets()
 
         # Assert
-        self.assertTrue(os.path.exists('./dataset1.xls'))
-        self.assertTrue(os.path.exists('./dataset2.xls'))
-
-        file.close()
+        self.assertTrue(os.path.exists(self.path1))
+        self.assertTrue(os.path.exists(self.path2))
 
     def test_download_return_value_not_empty(self):
         # Arrange
-        file = open(DATA_PATH, "r")
-        request.urlretrieve = Mock(return_value=file)
+        request.urlretrieve = Mock(side_effect=self.mock_urlretrieve)
 
         # Act
         df1, df2 = module.download_datasets()
@@ -52,8 +71,6 @@ class TestDownload(unittest.TestCase):
         # Assert
         self.assertNotEqual(df1, None)
         self.assertNotEqual(df2, None)
-
-        file.close()
 
     @patch("sys.stdout", new_callable=StringIO)
     def test_download_retry(self, mock_stdout):
@@ -70,8 +87,22 @@ class TestDownload(unittest.TestCase):
         self.assertIn("Retrying for the 2. time.", output)
         self.assertIn("Aborting pipeline due to too many failed download attempts.", output)
 
+    @staticmethod
+    def mock_urlretrieve(url, filename):
+        with open('test-data.xls', "rb") as src_file, open(filename, "wb") as dest_file:
+            dest_file.write(src_file.read())
+
 
 class TestWriteDatabase(unittest.TestCase):
+
+    def setUp(self):
+        self.path = '../data/database.sqlite'
+        if os.path.exists(self.path):
+            os.remove(self.path)
+
+    def tearDown(self):
+        if os.path.exists(self.path):
+            os.remove(self.path)
 
     def test_write_database_create_file(self):
         # Arrange
@@ -83,8 +114,7 @@ class TestWriteDatabase(unittest.TestCase):
         module.write_to_database(data1, data2)
 
         # Assert
-        self.assertTrue(os.path.exists('./dataset1.xls'))
-        self.assertTrue(os.path.exists('./dataset2.xls'))
+        self.assertTrue(os.path.exists(self.path))
 
     def test_write_database_contains_correct_tables(self):
         # Arrange
@@ -98,7 +128,7 @@ class TestWriteDatabase(unittest.TestCase):
 
         # Assert
         try:
-            conn = sqlite3.connect("../data/database.sqlite")
+            conn = sqlite3.connect(self.path)
             cursor = conn.cursor()
             sql_query = ".tables"
             cursor.execute(sql_query)
@@ -107,7 +137,7 @@ class TestWriteDatabase(unittest.TestCase):
             self.assertTrue(len(tables) == 2)
             self.assertTrue("life_expectancy" in tables)
             self.assertTrue("health_expenditure" in tables)
-        except sqlite3.Error as e:
+        except sqlite3.Error:
             print('Something went wrong during database connection.')
 
 
