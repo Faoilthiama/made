@@ -1,29 +1,19 @@
 import os
 import shutil
-import sqlite3
-import subprocess
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-import seaborn as sns
+
+from project.analysis import common
 
 
 def descriptive_analysis():
-    life_expectancy, health_expenditure = _load_datasets()
+    life_expectancy, health_expenditure = common.load_datasets()
     columns = [str(x) for x in range(2000, 2022)]
-    # _plot_mean_graph(life_expectancy, health_expenditure, columns)
+    _plot_mean_graph(life_expectancy, health_expenditure, columns)
     # _compute_ranges(life_expectancy, health_expenditure)
-    _scatter_graph(life_expectancy, health_expenditure, columns)
-
-
-def _load_datasets():
-    conn = sqlite3.connect('../data/database.sqlite')
-
-    life_expectancy = pd.read_sql_query("SELECT * FROM life_expectancy", conn)
-    health_expenditure = pd.read_sql_query("SELECT * FROM health_expenditure", conn)
-
-    return life_expectancy, health_expenditure
+    #_scatter_graph(life_expectancy, health_expenditure, columns)
 
 
 def _plot_mean_graph(life_expectancy, health_expenditure, columns):
@@ -40,7 +30,7 @@ def _plot_mean_graph(life_expectancy, health_expenditure, columns):
     ax2.plot(x, mean_health_expenditure, label='Mean health expenditure', color='orange')
 
     fig.legend(loc="upper left", bbox_to_anchor=(0.1, 0.1))
-
+    plt.savefig('mean_graph.png')
     plt.show()
 
 
@@ -54,26 +44,26 @@ def _scatter_graph(life_expectancy, health_expenditure, columns):
     df = pd.merge(life_expectancy, health_expenditure, on=['Country Code', 'Country Name'])
     countries = life_expectancy['Country Code']
 
-
     for country in countries:
         country_data = df[df['Country Code'] == country]
         plt.figure(figsize=(10, 6))
         all_health_expenditure = []
         all_life_expectancy = []
         for year in columns:
-            x = country_data[year + '_y'],
-            y = country_data[year + '_x'],
-            plt.scatter(
-                x,
-                y,
-                label=f'{year}',
-                color='blue',
-                alpha=0.7,
-                s=100,
-                edgecolor='black'
-            )
-            all_health_expenditure.extend(x[0])
-            all_life_expectancy.extend(y[0])
+            x = country_data[year + '_y']
+            y = country_data[year + '_x']
+            if x.values > 0 and y.values > 0:
+                plt.scatter(
+                    x,
+                    y,
+                    label=f'{year}',
+                    color='blue',
+                    alpha=0.7,
+                    s=100,
+                    edgecolor='black'
+                )
+                all_health_expenditure.extend(x.values)
+                all_life_expectancy.extend(y.values)
         coefficients = np.polyfit(all_health_expenditure, all_life_expectancy, 1)
         trendline = np.polyval(coefficients, np.array(all_health_expenditure))
 
