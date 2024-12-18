@@ -40,10 +40,18 @@ def clean_data(dataset):
         data_sheet = _drop_irrelevant_columns(data_sheet)
 
         data_sheet = _drop_empty_rows(data_sheet)
-        return data_sheet.fillna(0)
+        return _fill_NaN(data_sheet)
     except Exception as e:
         print('Something went wrong during data cleaning.')
         raise Exception('Data cleaning failed', e)
+
+
+def _fill_NaN(data):
+    year_columns = [str(year) for year in range(2000, 2022)]
+    data[year_columns] = data[year_columns].apply(lambda row: row.ffill(), axis=1)
+    data[year_columns] = data[year_columns].apply(lambda row: row.bfill(), axis=1)
+    data[year_columns] = data[year_columns].apply(lambda row: row.interpolate(method='linear', axis=0), axis=1)
+    return data
 
 
 def _drop_empty_rows(data_sheet):

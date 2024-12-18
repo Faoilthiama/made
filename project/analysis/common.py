@@ -9,4 +9,6 @@ def load_datasets():
     life_expectancy = pd.read_sql_query("SELECT * FROM life_expectancy", conn)
     health_expenditure = pd.read_sql_query("SELECT * FROM health_expenditure", conn)
 
+    conn.close()
+
     return life_expectancy, health_expenditure
