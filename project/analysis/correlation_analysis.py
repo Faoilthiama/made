@@ -28,6 +28,8 @@ def correlation_analysis():
             elif corr < 0:
                 counter_neg += 1
                 print(corr)
+                index = correlations.index((corr, pvalue))
+                print(life_expectancy.iloc[index]['Country Name'])
             else:
                 counter_zero += 1
             sum_corr += corr
