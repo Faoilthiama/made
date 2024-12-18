@@ -44,7 +44,7 @@ pipeline Stops {
         file: "./gtfs.sqlite";
     }
 
-    valuetype Zone oftype text {
+    valuetype Zone oftype integer {
         constraints: [ ZoneConstraint ];
     }
 
@@ -52,7 +52,7 @@ pipeline Stops {
         allowlist: ["1925"];
     }
 
-    valuetype Coordinate oftype text {
+    valuetype Coordinate oftype decimal {
         constraints: [ CoordinateConstraint ];
     }
 
