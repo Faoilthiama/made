@@ -48,17 +48,16 @@ pipeline Stops {
         constraints: [ ZoneConstraint ];
     }
 
-    constraint ZoneConstraint oftype AllowlistConstraint  {
-        allowlist: ["1925"];
-    }
+    constraint ZoneConstraint on integer:
+        value==1925;
 
     valuetype Coordinate oftype decimal {
         constraints: [ CoordinateConstraint ];
     }
 
     constraint CoordinateConstraint oftype RangeConstraint   {
-       lowerBound: -90.0;
-       upperBound: 90.0;
+       lowerBound: -90;
+       upperBound: 90;
     }
 
 }
